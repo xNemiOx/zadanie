@@ -1,53 +1,39 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+// pages/api/user/update.ts
+
+import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-export default async function updateProfile(request: NextApiRequest, response: NextApiResponse) {
-  const session = await getSession({ req: request });
+export async function POST(request: Request) {
+    try {
+        const { name, phone, email, password } = await request.json();
 
-  if (!session) {
-    return response.status(401).json({ error: 'Пользователь не авторизован' });
-  }
+        // Валидация входных данных
+        if (!email) {
+            return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+        }
 
-  const { name, surname, patronymic, location, birth_day, start_date, cost, about_me, gender, lessons, for_whom } = request.body;
+        // Обновляем информацию о пользователе
+        const dataToUpdate: any = {
+            name,
+            phone,
+        };
 
-  if (!name || !surname || !location || !birth_day || !start_date || !cost || !about_me || !gender || !lessons || !for_whom) {
-    return response.status(400).json({ error: 'Не все обязательные поля заполнены' });
-  }
+        // Если пароль указан, хэшируем его и добавляем к данным для обновления
+        if (password) {
+            dataToUpdate.password = await hash(password, 10);
+        }
 
-  const sessionUserId = (session?.user as { id?: string })?.id;
+        const updatedUser = await prisma.user.update({
+            where: { email }, // Используем email для поиска пользователя
+            data: dataToUpdate,
+        });
 
-  if (!sessionUserId) {
-    throw new Error('Не удалось получить идентификатор пользователя из сессии');
-  }
-  
-  try {
-    const updatedUserData = await prisma.tutor.update({
-      where: {
-        id: sessionUserId,
-      },
-      data: {
-        // name,
-        // surname,
-        // patronymic,
-        // location,
-        // birth_day,
-        // start_date,
-        // cost,
-        // about_me,
-        // gender,
-        // lessons,
-        // for_whom,
-      },
-    });
-  
-    console.log('Данные пользователя обновлены:', updatedUserData);
-  
-    return response.status(200).json({ message: 'Данные успешно обновлены' });
-  } catch (error) {
-    console.error('Ошибка при обновлении данных пользователя:', error);
-    return response.status(500).json({ error: 'Ошибка при обновлении данных пользователя' });
-  }
-}  
+        return NextResponse.json({ message: 'User updated successfully', user: updatedUser });
+    } catch (e) {
+        console.error("Error updating user:", e);
+        return NextResponse.json({ error: 'An error occurred during user update' }, { status: 500 });
+    }
+}

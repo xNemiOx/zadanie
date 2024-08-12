@@ -1,7 +1,8 @@
 'use client'
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
+import { getServerSession } from 'next-auth';
 
 export default function Register() {
     const [name, setName] = useState('');
@@ -17,6 +18,11 @@ export default function Register() {
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
+        if (password.length < 6) {
+            setError('Пароль должен содержать не менее 6 символов');
+            return;
+        }
+        
         if (password !== correctPassword) {
             setError('Пароли не совпадают');
             return;
@@ -24,6 +30,11 @@ export default function Register() {
 
         if (!email.match(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/)) {
             setError('Неверный формат адреса электронной почты');
+            return;
+        }
+
+        if (!phone.match(/^\+?[1-9]\d{1,14}$/)) {
+            setError('Неверный формат номера телефона');
             return;
         }
 

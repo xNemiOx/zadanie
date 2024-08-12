@@ -11,6 +11,7 @@ const config: Config = {
       colors: {
         'text': '#f0dcea',
         'grey': '#d4d4d4',
+        'gray': '#9da4b0',
 
        },
 

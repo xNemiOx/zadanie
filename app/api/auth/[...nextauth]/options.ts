@@ -1,44 +1,45 @@
-// pages/api/auth.ts
-
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import NextAuth, { Awaitable, NextAuthOptions } from 'next-auth';
+import NextAuth, { NextAuthOptions, User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaClient } from '@prisma/client';
 import { compare } from 'bcrypt';
-import type { User } from 'next-auth/';
 
 const prisma = new PrismaClient();
 
-async function checkPassword(email: string, password: string) {
+async function checkPassword(identifier: string, password: string): Promise<NextAuthUser | null> {
     try {
-        const user = await prisma.user.findUnique({
+        const user = await prisma.user.findFirst({
             where: {
-                email,
+                OR: [
+                    { phone: identifier },
+                    { email: identifier },
+                ],
             },
         });
 
-    // Проверяем, существует ли пользователь с таким email
-    if (!user) {
-        console.error('Пользователь не найден');
+        if (!user) {
+            console.error('Пользователь не найден');
+            return null;
+        }
+
+        const passwordMatches = await compare(password, user.password);
+
+        if (passwordMatches) {
+            // Возвращаем объект, который соответствует интерфейсу User и включает phone
+            return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                phone: user.phone,
+            } as NextAuthUser;
+        } else {
+            console.error('Неверный пароль');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error while checking password:', error);
         return null;
     }
-
-    // Хешируем введенный пользователем пароль и сравниваем с хешем из базы данных
-    const passwordMatches = await compare(password, user.password);
-
-    if (passwordMatches) {
-        // Если пароль совпадает, возвращаем пользователя
-        return user;
-    } else {
-        // Если пароль не совпадает, возвращаем null
-        console.error('Неверный пароль');
-        return null;
-    }
-} catch (error) {
-    console.error('Error while checking password:', error);
-    // Возвращаем общее сообщение об ошибке
-    return null;
-}
 }
 
 export const authOptions: NextAuthOptions = {
@@ -46,46 +47,45 @@ export const authOptions: NextAuthOptions = {
         CredentialsProvider({
             name: 'Credentials',
             credentials: {
-                email: { label: 'Email', type: 'email' },
+                identifier: { label: 'Identifier', type: 'text' },
                 password: { label: 'Password', type: 'password' },
             },
+            async authorize(credentials) {
+                const { identifier, password } = credentials as { identifier: string, password: string };
 
-            async authorize(credentials, req): Promise <User | null> {
-                const { email, password } = credentials as { email: string, password: string };
-
-                // Проверка для репетитора
-                const user = await checkPassword(email, password);
-                if (user) {
-                    const { password, ...res } = user;
-                    return {...res, username: ''};
+                if (!identifier || !password) {
+                    console.error('Необходимо указать и identifier, и пароль');
+                    return null;
                 }
 
-                return null;
+                return await checkPassword(identifier, password);
             },
         }),
     ],
-
     session: {
-        strategy:
-            'jwt'
+        strategy: 'jwt',
     },
-
     adapter: PrismaAdapter(prisma as any),
-
-    // Измененный маршрут на /api/auth
     callbacks: {
-        async session({ session, token, user }) {
-            // Проверяем, что сессия существует и содержит пользователя
+        async session({ session, token }) {
             if (session && session.user) {
-                session.user = token
-                return session;
-            } else {
-                // Если сессия или пользователь не найдены, возвращаем null
-                return session;
+                session.user.id = token.id as string;
+                session.user.name = token.name as string;
+                session.user.email = token.email as string;
+                session.user.phone = token.phone as string;
             }
+            return session;
+        },
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id as string;
+                token.name = user.name as string;
+                token.email = user.email as string;
+                token.phone = user.phone as string;
+            }
+            return token;
         },
     },
-
 };
 
 export default NextAuth(authOptions);

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -6,35 +6,36 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function AuthForm() {
-  const [email, setLogin] = useState('');
+  const [identifier, setIdentifier] = useState('');  // Универсальное поле для телефона или почты
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Добавляем состояние для отображения пароля
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Предотвращаем стандартное поведение отправки формы
-    try {
+    e.preventDefault();
 
+    try {
       const response = await signIn('credentials', {
-        email: email,
-        password: password,
-        redirect: true,
-        callbackUrl: '/Repcenter'
-      })
+        identifier,  // универсальное поле передаем как "identifier"
+        password,
+        redirect: false,
+        callbackUrl: '/'
+      });
 
       if (response?.ok) {
-        // Если аутентификация прошла успешно, перенаправляем пользователя на защищенную страницу
-        router.push('/Repcenter');
+        router.push('/');
         router.refresh();
+      } else {
+        setError('Неверный телефон/почта или пароль');
       }
     } catch (error) {
       console.error('Ошибка:', error);
       setError('Произошла ошибка при выполнении запроса');
     }
-
   };
+
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center p-24 bg-white">
       <div className="flex justify-center relative w-full max-w-sm">
@@ -44,10 +45,27 @@ export default function AuthForm() {
           </div>
           <form onSubmit={(e) => handleLogin(e)} className='flex flex-col items-center justify-center'>
             <div className='pt-5 space-y-8 pb-8'>
-              <input name='email' placeholder='Телефон или почта' value={email} onChange={(e) => setLogin(e.target.value)} className='text-background py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'></input>
+              <input 
+                name='identifier' 
+                placeholder='Телефон или почта' 
+                value={identifier} 
+                onChange={(e) => setIdentifier(e.target.value)} 
+                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+              />
               <div className="relative">
-                <input name='password' type={showPassword ? 'text' : 'password'} placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} className='text-background py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'></input>
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <input 
+                  name='password' 
+                  type={showPassword ? 'text' : 'password'} 
+                  placeholder='Пароль' 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="text-black absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
                   {showPassword ? 'Скрыть' : 'Показать'}
                 </button>
               </div>

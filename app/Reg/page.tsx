@@ -7,7 +7,7 @@ export default async function Auth() {
 
     const session = await getServerSession();
     if (session?.user) {
-        redirect('/Repcenter');
+        redirect('/');
     }
 
     return (

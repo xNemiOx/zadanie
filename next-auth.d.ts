@@ -1,12 +1,19 @@
-import NextAuth from 'next-auth'
+// next-auth.d.ts
+import { User as NextAuthUser } from 'next-auth';
+import { AdapterUser } from 'next-auth/adapters';
 
 declare module 'next-auth' {
-    interface Session {
-        user: {
-            id: string
-        } & DefaultSession['user']
-    }
-    interface User extends NextAuthUser {
-        username: string
-    }
+  interface User extends NextAuthUser {
+    phone?: string;
+  }
+  
+  interface Session {
+    user: User;
+  }
+}
+
+declare module 'next-auth/adapters' {
+  interface AdapterUser extends NextAuthUser {
+    phone?: string;
+  }
 }
