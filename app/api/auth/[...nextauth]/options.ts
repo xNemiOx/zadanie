@@ -9,11 +9,10 @@ import type { User } from 'next-auth/';
 
 const prisma = new PrismaClient();
 
-async function checkPassword(phone: string, email: string, password: string) {
+async function checkPassword(email: string, password: string) {
     try {
         const user = await prisma.user.findUnique({
             where: {
-                phone,
                 email,
             },
         });
