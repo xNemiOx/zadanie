@@ -44,7 +44,7 @@ export default function AuthForm() {
           </div>
           <form onSubmit={(e) => handleLogin(e)} className='flex flex-col items-center justify-center'>
             <div className='pt-5 space-y-8 pb-8'>
-              <input name='email' placeholder='Логин' value={email} onChange={(e) => setLogin(e.target.value)} className='text-background py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'></input>
+              <input name='email' placeholder='Телефон или почта' value={email} onChange={(e) => setLogin(e.target.value)} className='text-background py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'></input>
               <div className="relative">
                 <input name='password' type={showPassword ? 'text' : 'password'} placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} className='text-background py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'></input>
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center">
