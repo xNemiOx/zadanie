@@ -81,21 +81,21 @@ export default function Register() {
                                 placeholder='Имя' 
                                 value={name} 
                                 onChange={(e) => setName(e.target.value)} 
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                             />
                             <input 
                                 name='phone' 
                                 placeholder='Номер телефона' 
                                 value={phone} 
                                 onChange={(e) => setPhone(e.target.value)} 
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                             />
                             <input 
                                 name='email' 
                                 placeholder='Электронная почта' 
                                 value={email} 
                                 onChange={(e) => setEmail(e.target.value)} 
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                             />
                             <div className="relative">
                                 <input 
@@ -104,11 +104,11 @@ export default function Register() {
                                     placeholder='Пароль' 
                                     value={password} 
                                     onChange={(e) => setPassword(e.target.value)} 
-                                    className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                    className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                                 />
                                 <button 
                                     type="button" 
-                                    className="absolute mt-4 right-16 text-black" 
+                                    className="absolute mt-4 right-8 text-black" 
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? 'Скрыть' : 'Показать'}
@@ -120,7 +120,7 @@ export default function Register() {
                                 placeholder='Подтверждение пароля' 
                                 value={correctPassword} 
                                 onChange={(e) => setCorrectPassword(e.target.value)} 
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                             />
                         </div>
                         {error && <p className="text-red-500">{error}</p>}

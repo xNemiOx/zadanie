@@ -1,25 +1,55 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+
+declare global {
+  interface Window {
+    yandexCaptchaCallback: (token: string) => void;
+  }
+}
 
 export default function AuthForm() {
   const [identifier, setIdentifier] = useState('');  // Универсальное поле для телефона или почты
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const router = useRouter();
 
+  useEffect(() => {
+    // Загрузка скрипта Yandex SmartCaptcha
+    const script = document.createElement('script');
+    script.src = 'https://captcha-api.yandex.ru/captcha.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Функция обратного вызова для обработки токена капчи
+    window.yandexCaptchaCallback = function (token) {
+      setCaptchaToken(token);
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      setError('Пожалуйста, подтвердите, что вы не робот.');
+      return;
+    }
 
     try {
       const response = await signIn('credentials', {
         identifier,  // универсальное поле передаем как "identifier"
         password,
+        captchaToken,  // отправляем токен капчи на сервер
         redirect: false,
         callbackUrl: '/'
       });
@@ -37,7 +67,7 @@ export default function AuthForm() {
   };
 
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center p-24 bg-white">
+    <main className="relative min-h-screen flex flex-col items-center justify-center bg-white">
       <div className="flex justify-center relative w-full max-w-sm">
         <div className="px-9 w-full h-auto rounded-md backdrop-filter backdrop-blur-lg bg-grey transition duration-300 text-center items-center flex flex-col">
           <div className="text-black font-sans text-4xl flex flex-row justify-center">
@@ -50,7 +80,7 @@ export default function AuthForm() {
                 placeholder='Телефон или почта' 
                 value={identifier} 
                 onChange={(e) => setIdentifier(e.target.value)} 
-                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
               />
               <div className="relative">
                 <input 
@@ -59,7 +89,7 @@ export default function AuthForm() {
                   placeholder='Пароль' 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
-                  className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                  className='text-black py-3 w-72 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
                 />
                 <button 
                   type="button" 
@@ -70,10 +100,19 @@ export default function AuthForm() {
                 </button>
               </div>
             </div>
+
+            <div className="mb-4">
+              <div id="smart-captcha" 
+                   className="smart-captcha" 
+                   data-sitekey="ysc1_AGejMw3jRC6GMmFeVOiuh6m6TOzrjjnBv6vCOq9p9a3b9cb5"
+                   data-callback="yandexCaptchaCallback">
+              </div>
+            </div>
+
             <button type="submit" className="text-black bg-white rounded-3xl w-52 py-3">
               Войти
             </button>
-            {error && <p className="text-text text-sm mt-2">{error}</p>}
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             <Link href="/Reg" className="text-black text-xs mt-4 pb-4">Ещё нет аккаунта?</Link>
           </form>
         </div>

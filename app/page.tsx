@@ -10,10 +10,13 @@ export default function Profile() {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
 
     const router = useRouter();
 
@@ -24,47 +27,55 @@ export default function Profile() {
             router.push('/Auth');
         } else {
             const user = session.user;
-            console.log(user); // Проверка структуры данных
-
             setName(user?.name || '');
             setEmail(user?.email || '');
-
-            // Условие на случай, если телефонный номер не передается
             setPhone(user?.phone || '');
         }
     }, [session, status, router]);
 
     const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError('');
-      setMessage('');
-  
-      try {
-          const response = await fetch('/api/user/update', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  name,
-                  phone,
-                  email,
-                  password, // Передаем пароль, если он указан
-              }),
-          });
-  
-          if (response.ok) {
-              setMessage('Данные успешно обновлены');
-          } else {
-              const data = await response.json();
-              setError(data.error || 'Произошла ошибка при обновлении данных');
-          }
-      } catch (error) {
-          setError('Произошла ошибка при выполнении запроса');
-          console.error('Ошибка:', error);
-      }
-  };
-  
+        e.preventDefault();
+        setError('');
+        setMessage('');
+    
+        try {
+            const response = await fetch('/api/auth/user/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    phone,
+                    email,
+                    oldPassword,
+                    newPassword,
+                }),
+            });
+    
+            // Логирование полного ответа для отладки
+            console.log('Response Status:', response.status);
+            console.log('Response Headers:', response.headers);
+    
+            // Проверка на ошибки
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                console.error('Response error data:', errorData); // Логирование данных ошибки
+                setError(errorData?.error || 'Произошла ошибка при обновлении данных');
+                return;
+            }
+    
+            const data = await response.json();
+            setMessage('Данные успешно обновлены');
+            setOldPassword(''); // Очистка полей пароля после успешного обновления
+            setNewPassword('');
+        } catch (error) {
+            console.error('Ошибка при выполнении запроса:', error);  // Логирование ошибок
+            setError('Произошла ошибка при выполнении запроса');
+        }
+    };
+    
+    
 
     if (status === 'loading') {
         return <p>Loading...</p>;
@@ -79,46 +90,102 @@ export default function Profile() {
                     </div>
                     <form onSubmit={handleUpdate} className='flex flex-col items-center justify-center'>
                         <div className='pt-5 space-y-8 pb-8'>
-                            <input
-                                name='name'
-                                placeholder='Имя'
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-grey'
-                            />
-                            <input
-                                name='phone'
-                                placeholder='Телефон'
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
-                            />
-                            <input
-                                name='email'
-                                placeholder='Электронная почта'
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
-                            />
-                            <div className="relative">
-                                <input
-                                    name='password'
-                                    type={showPassword ? 'text' : 'password'}
-                                    placeholder='Пароль'
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
-                                />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-12 pr-3 flex items-center text-black">
-                                    {showPassword ? 'Скрыть' : 'Показать'}
-                                </button>
+                            <div className='flex items-center'>
+                                {isEditing ? (
+                                    <input
+                                        name='name'
+                                        placeholder='Имя'
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-grey'
+                                    />
+                                ) : (
+                                    <label className='text-black py-3 px-2 font-semibold rounded-md h-14 transition z-10'>
+                                        {name || 'Имя'}
+                                    </label>
+                                )}
                             </div>
+                            <div className='flex items-center'>
+                                {isEditing ? (
+                                    <input
+                                        name='phone'
+                                        placeholder='Телефон'
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                    />
+                                ) : (
+                                    <label className='text-black py-3 px-2 font-semibold rounded-md h-14 transition  z-10'>
+                                        {phone || 'Телефон'}
+                                    </label>
+                                )}
+                            </div>
+                            <div className='flex items-center'>
+                                {isEditing ? (
+                                    <input
+                                        name='email'
+                                        placeholder='Электронная почта'
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                    />
+                                ) : (
+                                    <label className='text-black py-3 px-2 font-semibold rounded-md h-14 transition z-10'>
+                                        {email || 'Электронная почта'}
+                                    </label>
+                                )}
+                            </div>
+
+                            {isEditing && (
+                                <>
+                                    <div className="relative">
+                                        <input
+                                            name='oldPassword'
+                                            type={showOldPassword ? 'text' : 'password'}
+                                            placeholder='Старый пароль'
+                                            value={oldPassword}
+                                            onChange={(e) => setOldPassword(e.target.value)}
+                                            className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                        />
+                                        <button type="button" onClick={() => setShowOldPassword(!showOldPassword)} className="absolute inset-y-0 right-12 pr-3 flex items-center text-black">
+                                            {showOldPassword ? 'Скрыть' : 'Показать'}
+                                        </button>
+                                    </div>
+
+                                    <div className="relative">
+                                        <input
+                                            name='newPassword'
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            placeholder='Новый пароль'
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            className='text-black py-3 px-2 font-semibold rounded-md h-14 transition bg-white z-10 placeholder:text-background'
+                                        />
+                                        <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute inset-y-0 right-12 pr-3 flex items-center text-black">
+                                            {showNewPassword ? 'Скрыть' : 'Показать'}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                         {message && <p className="text-green-500 text-sm mt-2">{message}</p>}
-                        <button type="submit" className="text-black bg-white rounded-3xl w-52 py-3">
-                            Обновить
-                        </button>
+                        <div className="flex space-x-4">
+                            {isEditing ? (
+                                <>
+                                    <button type="submit" className="text-black bg-white rounded-3xl w-52 py-3">
+                                        Обновить
+                                    </button>
+                                    <button type="button" onClick={() => setIsEditing(false)} className="text-black bg-gray-300 rounded-3xl w-52 py-3">
+                                        Отмена
+                                    </button>
+                                </>
+                            ) : (
+                                <button type="button" onClick={() => setIsEditing(true)} className="text-black bg-white rounded-3xl w-52 py-3">
+                                    Редактировать
+                                </button>
+                            )}
+                        </div>
                     </form>
                     <div className="space-x-8 mt-4">
                         <Link onClick={() => { signOut(); }} href="/" className="text-black">
