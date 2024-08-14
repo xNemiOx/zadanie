@@ -1,47 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { compare, hash } from 'bcrypt';
+import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   try {
-    const { name, phone, email, oldPassword, newPassword } = await req.json();
+    const { name, phone, email, password } = await req.json();
 
-    // Ищем пользователя по email
-    const user = await prisma.user.findUnique({
+    // Проверяем, существует ли уже пользователь с таким email
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (existingUser) {
+      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
 
-    // Сравниваем введённый старый пароль с текущим паролем пользователя
-    const passwordMatch = await compare(oldPassword, user.password);
-    
-    if (!passwordMatch) {
-      return NextResponse.json({ error: 'Old password is incorrect' }, { status: 401 });
-    }
+    // Хешируем пароль
+    const hashedPassword = await hash(password, 10);
 
-    // Хешируем новый пароль
-    const hashedPassword = await hash(newPassword, 10);
-
-    // Обновляем данные пользователя в базе данных
-    const updatedUser = await prisma.user.update({
-      where: { email },
+    // Создаем нового пользователя
+    const newUser = await prisma.user.create({
       data: {
         name,
         phone,
+        email,
         password: hashedPassword,
       },
     });
 
-    console.log(updatedUser);
-
-    return NextResponse.json({ message: 'Profile updated successfully' });
+    return NextResponse.json({ message: 'User created successfully', user: newUser }, { status: 201 });
   } catch (e) {
-    console.error('Error updating user:', e);
-    return NextResponse.json({ error: 'An error occurred during profile update' }, { status: 500 });
+    console.error('Error creating user:', e);
+    return NextResponse.json({ error: 'An error occurred during registration' }, { status: 500 });
   }
 }
