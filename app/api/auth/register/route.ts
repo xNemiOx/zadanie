@@ -1,30 +1,47 @@
-import { NextResponse } from 'next/server';
-import { hash } from 'bcrypt';
+import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { compare, hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const {email, password, name, phone} = await request.json();
+    const { name, phone, email, oldPassword, newPassword } = await req.json();
 
-    const hashedPassword = await hash(password, 10);
+    // Ищем пользователя по email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    const user = await prisma.user.create({
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Сравниваем введённый старый пароль с текущим паролем пользователя
+    const passwordMatch = await compare(oldPassword, user.password);
+    
+    if (!passwordMatch) {
+      return NextResponse.json({ error: 'Old password is incorrect' }, { status: 401 });
+    }
+
+    // Хешируем новый пароль
+    const hashedPassword = await hash(newPassword, 10);
+
+    // Обновляем данные пользователя в базе данных
+    const updatedUser = await prisma.user.update({
+      where: { email },
       data: {
         name,
         phone,
-        email,
-        password: hashedPassword
-      }
-    })
+        password: hashedPassword,
+      },
+    });
 
-    console.log(user)
+    console.log(updatedUser);
 
+    return NextResponse.json({ message: 'Profile updated successfully' });
   } catch (e) {
-    console.error("Error creating user:", e);
-    return NextResponse.json({ error: 'An error occurred during user creation' }, { status: 500 });
+    console.error('Error updating user:', e);
+    return NextResponse.json({ error: 'An error occurred during profile update' }, { status: 500 });
   }
-
-  return NextResponse.json({ message: 'success' });
 }
