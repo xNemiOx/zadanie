@@ -28,7 +28,6 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Проверка старого пароля
     if (oldPassword) {
       const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
       if (!isPasswordValid) {
@@ -38,7 +37,6 @@ export const POST = async (req: NextRequest) => {
 
     const data: any = { name, phone };
 
-    // Если передан новый пароль, хешируем его
     if (newPassword) {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       data.password = hashedPassword;
@@ -59,7 +57,6 @@ export const POST = async (req: NextRequest) => {
 
     console.error('Error updating user:', e);
 
-    // Если ошибка связана с уникальностью email, возвращаем соответствующее сообщение.
     if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
       return NextResponse.json({ error: 'Этот email уже используется' }, { status: 400 });
     }

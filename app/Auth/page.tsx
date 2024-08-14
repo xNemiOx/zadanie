@@ -8,7 +8,7 @@ export default async function Auth() {
     const session = await getServerSession();
 
     if (session?.user) {
-        redirect('/'); // Перенаправляем авторизованного пользователя на главную страницу
+        redirect('/');
         return null;
     }
 

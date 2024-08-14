@@ -25,7 +25,6 @@ async function checkPassword(identifier: string, password: string): Promise<Next
         const passwordMatches = await compare(password, user.password);
 
         if (passwordMatches) {
-            // Возвращаем объект, который соответствует интерфейсу User и включает phone
             return {
                 id: user.id,
                 email: user.email,

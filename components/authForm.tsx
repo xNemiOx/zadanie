@@ -12,7 +12,7 @@ declare global {
 }
 
 export default function AuthForm() {
-  const [identifier, setIdentifier] = useState('');  // Универсальное поле для телефона или почты
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -21,13 +21,11 @@ export default function AuthForm() {
   const router = useRouter();
 
   useEffect(() => {
-    // Загрузка скрипта Yandex SmartCaptcha
     const script = document.createElement('script');
     script.src = 'https://captcha-api.yandex.ru/captcha.js';
     script.async = true;
     document.body.appendChild(script);
 
-    // Функция обратного вызова для обработки токена капчи
     window.yandexCaptchaCallback = function (token) {
       setCaptchaToken(token);
     };
@@ -47,9 +45,9 @@ export default function AuthForm() {
 
     try {
       const response = await signIn('credentials', {
-        identifier,  // универсальное поле передаем как "identifier"
+        identifier,
         password,
-        captchaToken,  // отправляем токен капчи на сервер
+        captchaToken,
         redirect: false,
         callbackUrl: '/'
       });

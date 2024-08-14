@@ -8,7 +8,6 @@ export const POST = async (req: NextRequest) => {
   try {
     const { name, phone, email, password } = await req.json();
 
-    // Проверяем, существует ли уже пользователь с таким email
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -17,10 +16,8 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: 'User already exists' }, { status: 409 });
     }
 
-    // Хешируем пароль
     const hashedPassword = await hash(password, 10);
 
-    // Создаем нового пользователя
     const newUser = await prisma.user.create({
       data: {
         name,

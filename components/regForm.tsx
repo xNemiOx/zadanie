@@ -1,8 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { redirect, useRouter } from 'next/navigation';
-import { getServerSession } from 'next-auth';
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
     const [name, setName] = useState('');
@@ -10,7 +9,7 @@ export default function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [correctPassword, setCorrectPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false); // Добавляем состояние для отображения пароля
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
     const router = useRouter();
